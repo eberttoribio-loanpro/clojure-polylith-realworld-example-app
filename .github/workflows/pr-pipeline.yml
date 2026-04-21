@@ -117,24 +117,3 @@ jobs:
             ${{ runner.os }}-clj-
       - name: "Run tests for ${{ matrix.project }}"
         run: clojure -M:poly test project:${{ matrix.project }}
-
-  ai-review:
-    runs-on: ubuntu-latest
-    name: AI Automated Review
-    permissions:
-      security-events: write
-      contents: read
-      pull-requests: write
-    needs:
-      - early-test
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: "0"
-      - name: Amazon Q Developer Review
-        uses: aws-actions/amazon-q-developer-agent-for-github-actions@v1
-        with:
-          review-type: code-review
-      - name: Check for Kiro Specs
-        id: kiro-specs
-        run: test -d .kiro/specs && echo "has-specs=true" >> $GITHUB_OUTPUT || echo "has-specs=false" >> $GITHUB_OUTPUT
