@@ -2,7 +2,7 @@ name: usermanager-example PR Pipeline
 on:
   pull_request:
     branches:
-      - develop
+      - master
     paths-ignore:
       - "**/*.md"
       - docs/**
