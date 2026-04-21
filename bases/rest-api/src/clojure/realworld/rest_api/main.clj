@@ -9,7 +9,7 @@
 (defn start!
   [port]
   (if-let [_server @server-ref]
-    (log/warn "Server already running? (stop!) it first.")
+    (log/warn "Server already running? (stop!) it first.test")
     (do
       (log/info "Starting server on port: " port)
       (api/init)
