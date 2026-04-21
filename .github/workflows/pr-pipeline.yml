@@ -54,17 +54,22 @@ jobs:
       - name: Get affected projects
         id: affected
         run: |
-          PROJECTS=$(clojure -M:poly ws get:changes:changed-or-affected-projects since:release skip:dev)
-          echo "Raw output: $PROJECTS"
-          # Convert space/newline-separated list to JSON array
-          JSON=$(echo "$PROJECTS" | tr -s '[:space:]' '\n' | sed '/^$/d' | jq -R . | jq -s .)
-          echo "projects=$JSON" >> $GITHUB_OUTPUT
-          if [ "$JSON" = "[]" ]; then
+          RAW=$(poly ws get:changes:changed-or-affected-projects since:release skip:dev color-mode:none)
+          echo "Raw output: $RAW"
+          # Strip EDN vector brackets and quotes, get clean project names
+          CLEAN=$(echo "$RAW" | tr -d '[]"' | tr -d '\n' | xargs)
+          echo "Clean output: $CLEAN"
+          if [ -z "$CLEAN" ]; then
+            echo "projects=[]" >> $GITHUB_OUTPUT
             echo "has-projects=false" >> $GITHUB_OUTPUT
+            echo "No affected projects found."
           else
+            # Convert space-separated names to JSON array
+            JSON=$(echo "$CLEAN" | tr ' ' '\n' | jq -R . | jq -s .)
+            echo "projects=$JSON" >> $GITHUB_OUTPUT
             echo "has-projects=true" >> $GITHUB_OUTPUT
+            echo "Affected projects: $JSON"
           fi
-          echo "Affected projects: $JSON"
 
   early-test:
     runs-on: ubuntu-latest
@@ -112,3 +117,24 @@ jobs:
             ${{ runner.os }}-clj-
       - name: "Run tests for ${{ matrix.project }}"
         run: clojure -M:poly test project:${{ matrix.project }}
+
+  ai-review:
+    runs-on: ubuntu-latest
+    name: AI Automated Review
+    permissions:
+      security-events: write
+      contents: read
+      pull-requests: write
+    needs:
+      - early-test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: "0"
+      - name: Amazon Q Developer Review
+        uses: aws-actions/amazon-q-developer-agent-for-github-actions@v1
+        with:
+          review-type: code-review
+      - name: Check for Kiro Specs
+        id: kiro-specs
+        run: test -d .kiro/specs && echo "has-specs=true" >> $GITHUB_OUTPUT || echo "has-specs=false" >> $GITHUB_OUTPUT
