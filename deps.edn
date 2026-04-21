@@ -16,6 +16,7 @@
 
                                   ; Bases
                                   poly/rest-api {:local/root "bases/rest-api"}
+                                  poly/rest-ui {:local/root "bases/rest-ui"}
 
                                   ; Development dependencies
                                   djblue/portal {:mvn/version "0.35.1"}
@@ -29,7 +30,8 @@
                                   "components/tag/test"
                                   "components/user/test"
 
-                                  "bases/rest-api/test"]
+                                  "bases/rest-api/test"
+                                  "bases/rest-ui/test"]
                     :extra-deps  {org.clojure/test.check {:mvn/version "1.1.1"}}}
 
              :poly {:main-opts  ["-m" "polylith.clj.core.poly-cli.core"]
