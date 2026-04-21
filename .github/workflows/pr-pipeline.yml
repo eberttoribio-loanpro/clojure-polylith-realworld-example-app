@@ -64,8 +64,8 @@ jobs:
             echo "has-projects=false" >> $GITHUB_OUTPUT
             echo "No affected projects found."
           else
-            # Convert space-separated names to JSON array
-            JSON=$(echo "$CLEAN" | tr ' ' '\n' | jq -R . | jq -s .)
+            # Convert space-separated names to JSON array (compact, single line)
+            JSON=$(echo "$CLEAN" | tr ' ' '\n' | jq -R . | jq -sc .)
             echo "projects=$JSON" >> $GITHUB_OUTPUT
             echo "has-projects=true" >> $GITHUB_OUTPUT
             echo "Affected projects: $JSON"
