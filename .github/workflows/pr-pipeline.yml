@@ -1,4 +1,4 @@
-name: usermanager-example PR Pipeline
+name: Polylith PR Pipeline
 on:
   pull_request:
     branches:
@@ -8,7 +8,7 @@ on:
       - docs/**
       - .kiro/**
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 jobs:
   affected-projects:
@@ -18,22 +18,16 @@ jobs:
       projects: ${{ steps.affected.outputs.projects }}
       has-projects: ${{ steps.affected.outputs.has-projects }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: "0"
-      - name: Setup Java
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "21"
-      - name: Install Clojure CLI
-        run: |
-          echo "Installing Clojure..."
-          curl -L -O https://github.com/clojure/brew-install/releases/latest/download/linux-install.sh
-          chmod +x linux-install.sh
-          sudo ./linux-install.sh
-          rm linux-install.sh
-          clojure --version
+      - uses: DeLaGuardo/setup-clojure@12.1
+        with:
+          cli: latest
       - name: Install Polylith
         run: |
           echo "Installing Polylith..."
@@ -43,6 +37,7 @@ jobs:
           printf '#!/bin/sh\nARGS=""\nwhile [ "$1" != "" ] ; do\n  ARGS="$ARGS $1"\n  shift\ndone\nexec java $JVM_OPTS -jar /usr/local/polylith/poly.jar $ARGS\n' | sudo tee /usr/local/bin/poly > /dev/null
           sudo chmod +x /usr/local/bin/poly
           poly version
+
       - name: Cache Maven dependencies
         uses: actions/cache@v4
         with:
@@ -56,7 +51,6 @@ jobs:
         run: |
           RAW=$(poly ws get:changes:changed-or-affected-projects since:release skip:dev color-mode:none)
           echo "Raw output: $RAW"
-          # Strip EDN vector brackets and quotes, get clean project names
           CLEAN=$(echo "$RAW" | tr -d '[]"' | tr -d '\n' | xargs)
           echo "Clean output: $CLEAN"
           if [ -z "$CLEAN" ]; then
@@ -64,7 +58,6 @@ jobs:
             echo "has-projects=false" >> $GITHUB_OUTPUT
             echo "No affected projects found."
           else
-            # Convert space-separated names to JSON array (compact, single line)
             JSON=$(echo "$CLEAN" | tr ' ' '\n' | jq -R . | jq -sc .)
             echo "projects=$JSON" >> $GITHUB_OUTPUT
             echo "has-projects=true" >> $GITHUB_OUTPUT
@@ -82,29 +75,14 @@ jobs:
       matrix:
         project: ${{ fromJson(needs.affected-projects.outputs.projects) }}
     steps:
-      - uses: actions/checkout@v4
-      - name: Setup Java
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "21"
-      - name: Install Clojure CLI
-        run: |
-          echo "Installing Clojure..."
-          curl -L -O https://github.com/clojure/brew-install/releases/latest/download/linux-install.sh
-          chmod +x linux-install.sh
-          sudo ./linux-install.sh
-          rm linux-install.sh
-          clojure --version
-      - name: Install Polylith
-        run: |
-          echo "Installing Polylith..."
-          POLY_VERSION="0.2.21"
-          sudo mkdir -p /usr/local/polylith
-          sudo curl -L "https://github.com/polyfy/polylith/releases/download/v${POLY_VERSION}/poly-${POLY_VERSION}.jar" -o /usr/local/polylith/poly.jar
-          printf '#!/bin/sh\nARGS=""\nwhile [ "$1" != "" ] ; do\n  ARGS="$ARGS $1"\n  shift\ndone\nexec java $JVM_OPTS -jar /usr/local/polylith/poly.jar $ARGS\n' | sudo tee /usr/local/bin/poly > /dev/null
-          sudo chmod +x /usr/local/bin/poly
-          poly version
+      - uses: DeLaGuardo/setup-clojure@12.1
+        with:
+          cli: latest
       - name: Cache Maven dependencies
         uses: actions/cache@v4
         with:
