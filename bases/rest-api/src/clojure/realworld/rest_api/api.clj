@@ -66,7 +66,7 @@
     (let [db (database/db)]
       (if (database/db-exists?)
         (if (database/valid-schema? db)
-          (log/info "Database schema is valid.")
+          (log/info "Database schema is valid......")
           (do
             (log/warn "Please fix database schema and restart")
             (System/exit 1)))
