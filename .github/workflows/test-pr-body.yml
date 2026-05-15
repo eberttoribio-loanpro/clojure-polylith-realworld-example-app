@@ -26,7 +26,7 @@ jobs:
           gh api repos/${{ github.repository }}/commits/${{ inputs.commit-sha }}/pulls --jq '.[0].body // empty' 2>&1 || echo "FAILED with exit code $?"
           echo ""
           echo "--- With 2>/dev/null ---"
-          PR_BODY=$(gh api repos/${{ github.repository }}/commits/${{ inputs.commit-sha }}/pulls --jq '.[0].body // empty' 2>/dev/null | tr -d '\r') || true
+          PR_BODY=$(gh api repos/${{ github.repository }}/commits/${{ inputs.commit-sha }}/pulls 
           echo "PR_BODY='$PR_BODY'"
           PR_PROJECTS=$(echo "$PR_BODY" | grep -o 'projects=[a-zA-Z0-9_,\-]*' | head -1 | sed 's/^projects=//' | tr ',' ' ') || true
           echo "PR_PROJECTS='$PR_PROJECTS'"
