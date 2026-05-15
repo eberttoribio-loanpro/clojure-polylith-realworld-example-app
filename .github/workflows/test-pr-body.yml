@@ -1,0 +1,56 @@
+name: Test PR Body Extraction
+on:
+  workflow_dispatch:
+    inputs:
+      commit-sha:
+        description: 'Commit SHA to look up PR body for'
+        required: true
+        type: string
+
+jobs:
+  # Test 1: No pull-requests permission
+  without-permission:
+    runs-on: ubuntu-latest
+    name: Without pull-requests permission
+    permissions:
+      contents: read
+    steps:
+      - name: Test gh api (no PR permission)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "=== Testing WITHOUT pull-requests:read ==="
+          echo "Commit: ${{ inputs.commit-sha }}"
+          echo ""
+          echo "--- Raw API response ---"
+          gh api repos/${{ github.repository }}/commits/${{ inputs.commit-sha }}/pulls --jq '.[0].body // empty' 2>&1 || echo "FAILED with exit code $?"
+          echo ""
+          echo "--- With 2>/dev/null ---"
+          PR_BODY=$(gh api repos/${{ github.repository }}/commits/${{ inputs.commit-sha }}/pulls --jq '.[0].body // empty' 2>/dev/null | tr -d '\r') || true
+          echo "PR_BODY='$PR_BODY'"
+          PR_PROJECTS=$(echo "$PR_BODY" | grep -o 'projects=[a-zA-Z0-9_,\-]*' | head -1 | sed 's/^projects=//' | tr ',' ' ') || true
+          echo "PR_PROJECTS='$PR_PROJECTS'"
+
+  # Test 2: With pull-requests permission
+  with-permission:
+    runs-on: ubuntu-latest
+    name: With pull-requests permission
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Test gh api (with PR permission)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "=== Testing WITH pull-requests:read ==="
+          echo "Commit: ${{ inputs.commit-sha }}"
+          echo ""
+          echo "--- Raw API response ---"
+          gh api repos/${{ github.repository }}/commits/${{ inputs.commit-sha }}/pulls --jq '.[0].body // empty' 2>&1 || echo "FAILED with exit code $?"
+          echo ""
+          echo "--- With 2>/dev/null ---"
+          PR_BODY=$(gh api repos/${{ github.repository }}/commits/${{ inputs.commit-sha }}/pulls --jq '.[0].body // empty' 2>/dev/null | tr -d '\r') || true
+          echo "PR_BODY='$PR_BODY'"
+          PR_PROJECTS=$(echo "$PR_BODY" | grep -o 'projects=[a-zA-Z0-9_,\-]*' | head -1 | sed 's/^projects=//' | tr ',' ' ') || true
+          echo "PR_PROJECTS='$PR_PROJECTS'"
