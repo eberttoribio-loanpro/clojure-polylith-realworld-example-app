@@ -7,7 +7,7 @@ on:
 jobs:
   test-extraction:
     runs-on: ubuntu-latest
-    name: Test PR Body from push event
+    name: Test PR Body from push event 2
     steps:
       - name: Test gh api with github.sha
         env:
