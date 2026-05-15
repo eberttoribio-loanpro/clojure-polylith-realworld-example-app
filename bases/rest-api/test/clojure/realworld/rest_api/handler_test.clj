@@ -443,7 +443,7 @@
 (deftest articles--no-limit-and-offset--return-200
   (let [res (handler/articles {:auth-user (gen/generate (s/gen user-spec/user))
                                :params    {}})]
-    (is (= {:status 200
+    (is (= {:status 222
             :body   {:limit     nil
                      :offset    nil
                      :tag       nil

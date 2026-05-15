@@ -78,6 +78,8 @@ jobs:
         project: ${{ fromJson(needs.pre-early-test.outputs.projects) }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: "0"
       - name: Install Java 21 (Temurin)
         uses: actions/setup-java@v4
         with:
